@@ -1,0 +1,89 @@
+﻿@{
+    Layout = "";
+}
+@model ConfigurationModel
+@using Nop.Plugin.Payments.Iugu.Models;
+@using Nop.Web.Framework;
+@Html.Action("StoreScopeConfiguration", "Setting", new { area = "Admin" })
+
+@using (Html.BeginForm())
+{ 
+    @Html.AntiForgeryToken()
+    <div class="panel-group">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <fieldset name="InstrucaoConfiguracao">
+                    <legend>Instruções de configuração</legend>
+
+                    1. Crie uma conta no PagSeguro<br />
+                    2. Digite no campo CustomApiToken abaixo, o token criado no IUGU<br />
+
+
+                    <p>No site do IUGU faça as seguintes configurações:</p>
+                    2. Menu Administração > Cofiguração de conta> Clique no botão "Adicionar API Token" e digite no campo "API Custom Token" abaixo o token gerado<br />
+                    3. Menu Administração > Gatilho > Clique em Adicionar e informe o endereço https://www.SuaLoja.com.br/Plugins/PaymentIugu/PaymentReturn e Evento Fatura Liberada <br />
+
+                    <p>Configurações de endereço, são campos customizados para o cliente: </p>
+                    1. Configurações > Cliente > Address form fields <br />
+                    2. Adicionar campo novo > Name = Número | Control Type = Caixa de texto | Required = true | Display order = 0 <br />
+                    3. Adicionar campo novo > Name = Complemento | Control Type = Caixa de texto | Required = false | Display order = 1 <br />
+
+                    <p>Você está pronto para começar a vender via IUGU!</p>
+                </fieldset>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.LabelFor(model => model.CustomApiToken)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.EditorFor(model => model.CustomApiToken)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.LabelFor(model => model.AdicionarNotaExcluir)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.EditorFor(model => model.AdicionarNotaExcluir)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.LabelFor(model => model.AdicionarNotaPrazoFabricaoEnvio)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.EditorFor(model => model.AdicionarNotaPrazoFabricaoEnvio)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.LabelFor(model => model.QuantidadeDiasBoleto)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.EditorFor(model => model.QuantidadeDiasBoleto)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.LabelFor(model => model.NomePluginAmigavelMensagemConfirmacao)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.EditorFor(model => model.NomePluginAmigavelMensagemConfirmacao)
+                    </div>
+                </div>
+                <p>
+                    ** Em caso de dúvidas, problemas ou sugestões, entre em contato com: <a href="mailto:pedrousinskas@smartenup.com.br">
+                        pedrousinskas@smartenup.com.br
+                    </a>
+                </p>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        &nbsp;
+                    </div>
+                    <div class="col-md-9">
+                        <input type="submit" name="save" class="btn bg-blue" value="@T("Admin.Common.Save")" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
