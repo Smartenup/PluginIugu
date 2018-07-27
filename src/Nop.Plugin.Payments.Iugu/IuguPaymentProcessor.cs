@@ -8,6 +8,7 @@ using Nop.Core.Plugins;
 using Nop.Plugin.Payments.Iugu.Controllers;
 using Nop.Services.Common;
 using Nop.Services.Payments;
+using SmartenUP.Core.Services;
 using SmartenUP.Core.Util.Helper;
 using System;
 using System.Collections.Generic;
@@ -21,19 +22,22 @@ namespace Nop.Plugin.Payments.Iugu
         private readonly IAddressAttributeParser _addressAttributeParser;
         private readonly IStoreContext _storeContext;
         private readonly IuguPaymentSettings _iuguPaymentSettings;
+        private readonly IOrderNoteService _orderNoteService;
 
 
         public IuguPaymentProcessor(
             IWorkContext workContext,
             IAddressAttributeParser addressAttributeParser,
             IStoreContext storeContext,
-            IuguPaymentSettings iuguPaymentSettings
+            IuguPaymentSettings iuguPaymentSettings,
+            IOrderNoteService orderNoteService
             )
         {
             _workContext = workContext;
             _addressAttributeParser = addressAttributeParser;
             _storeContext = storeContext;
             _iuguPaymentSettings = iuguPaymentSettings;
+            _orderNoteService = orderNoteService;
         }
 
         public bool SupportCapture => false;
@@ -185,7 +189,24 @@ namespace Nop.Plugin.Payments.Iugu
                 string phonePrefix = AddressHelper.ObterAreaTelefone(postProcessPaymentRequest.Order.BillingAddress.PhoneNumber);
                 string urlRetorno = _storeContext.CurrentStore.Url + "checkout/completed/" + postProcessPaymentRequest.Order.Id.ToString();
                 string urlNotification = _storeContext.CurrentStore.Url + "Plugins/PaymentIugu/PaymentReturn";
-                int descontoCentavos = ObterPrecoCentavos(decimal.Round(postProcessPaymentRequest.Order.OrderSubTotalDiscountInclTax, 2));
+
+                int descontoCentavos = 0;
+
+                //Desconto aplicado na ordem subtotal
+                if (postProcessPaymentRequest.Order.OrderSubTotalDiscountExclTax > 0)
+                {
+                    var discount = postProcessPaymentRequest.Order.OrderSubTotalDiscountExclTax;
+                    discount = Math.Round(discount, 2);
+                    descontoCentavos += ObterPrecoCentavos(decimal.Round(discount, 2));
+                }
+
+                //desconto fixo, dado por cupom, os descontos podem ser cumulativos
+                if (postProcessPaymentRequest.Order.OrderDiscount > 0)
+                {
+                    var discount = postProcessPaymentRequest.Order.OrderDiscount;
+                    discount = Math.Round(discount, 2);
+                    descontoCentavos += ObterPrecoCentavos(decimal.Round(discount, 2));
+                }
 
 
                 var payer = new PayerModel() { CpfOrCnpj = cnpjcpf, Address = addressModel, Email = email, Name = name, Phone = phone, PhonePrefix = phonePrefix };
@@ -199,10 +220,13 @@ namespace Nop.Plugin.Payments.Iugu
                 };
                 
                 invoice = apiInvoice.CreateAsync(invoiceRequest, _iuguPaymentSettings.CustomApiToken).ConfigureAwait(false).GetAwaiter().GetResult();
-
+                
                 urlRedirect = invoice.secure_url;
                 
             };
+
+            
+            _orderNoteService.AddOrderNote("Fatura IUGU Bradesco gerada.", true, postProcessPaymentRequest.Order);
 
             System.Web.HttpContext.Current.Response.Redirect(urlRedirect);
         }
