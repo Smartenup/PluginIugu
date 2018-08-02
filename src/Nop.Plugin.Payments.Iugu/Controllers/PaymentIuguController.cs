@@ -2,7 +2,6 @@
 using iugu.net.Lib;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
-using Nop.Core.Domain.Payments;
 using Nop.Plugin.Payments.Iugu.Models;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
@@ -204,16 +203,20 @@ namespace Nop.Plugin.Payments.Iugu.Controllers
                     return new HttpStatusCodeResult(HttpStatusCode.InternalServerError);
                 }
 
-                if (dataStatus == "paid" && order.PaymentStatus == PaymentStatus.Pending)
+                if (dataStatus == "paid" && _orderProcessingService.CanMarkOrderAsPaid(order))
                 {
-                    order.PaymentStatus = PaymentStatus.Authorized;
-                    _orderProcessingService.MarkAsAuthorized(order);
+                    order.AuthorizationTransactionId = dataId;
+
+                    _orderService.UpdateOrder(order);
+
+                    _orderProcessingService.MarkOrderAsPaid(order);
+
                     _orderNoteService.AddOrderNote("Pagamento aprovado.", true, order);
 
-                    if(_iuguPaymentSettings.AdicionarNotaExcluir)
+                    if (_iuguPaymentSettings.AdicionarNotaExcluir)
                         _orderNoteService.AddOrderNote("Aguardando Impressão - Excluir esse comentário ao imprimir ", false, order);
 
-                    if(_iuguPaymentSettings.AdicionarNotaPrazoFabricaoEnvio)
+                    if (_iuguPaymentSettings.AdicionarNotaPrazoFabricaoEnvio)
                         _orderNoteService.AddOrderNote(_orderNoteService.GetOrdeNoteRecievedPayment(order, _iuguPaymentSettings.NomePluginAmigavelMensagemConfirmacao), true, order, true);
                 }
 
