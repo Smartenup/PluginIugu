@@ -142,13 +142,16 @@ namespace Nop.Plugin.Payments.Iugu
                 string complement = string.Empty;
                 string cnpjcpf = string.Empty;
 
-                addressHelper.GetCustomNumberAndComplement(postProcessPaymentRequest.Order.BillingAddress.CustomAttributes, out number, out complement, out cnpjcpf);
+                addressHelper.GetCustomNumberAndComplement(postProcessPaymentRequest.Order.BillingAddress.CustomAttributes, 
+                    out number, out complement, out cnpjcpf);
 
                 InvoiceModel invoice;
 
                 var customVariables = new List<CustomVariables> 
                 {
-                    new CustomVariables { name = IuguHelper.CODIGO_PEDIDO, value = postProcessPaymentRequest.Order.Id.ToString() }
+                    new CustomVariables {
+                        name = IuguHelper.CODIGO_PEDIDO,
+                        value = postProcessPaymentRequest.Order.Id.ToString() }
                 };
 
                 var addressModel = new AddressModel()
@@ -175,14 +178,23 @@ namespace Nop.Plugin.Payments.Iugu
 
                     productName = ProductHelper.AddItemDescrition(productName, item);
 
-                    invoiceItems[i] = new Item() { description = productName, price_cents = ObterPrecoCentavos(decimal.Round(item.UnitPriceInclTax, 2)), quantity = item.Quantity };
+                    invoiceItems[i] = new Item() {
+                        description = productName,
+                        price_cents = ObterPrecoCentavos(decimal.Round(item.UnitPriceInclTax, 2)),
+                        quantity = item.Quantity };
                     i++;
                 }
 
-                invoiceItems[i] = new Item() { description = postProcessPaymentRequest.Order.ShippingMethod, price_cents = ObterPrecoCentavos(decimal.Round(postProcessPaymentRequest.Order.OrderShippingInclTax, 2)), quantity = 1 };
+                invoiceItems[i] = new Item() {
+                    description = postProcessPaymentRequest.Order.ShippingMethod,
+                    price_cents = ObterPrecoCentavos(decimal.Round(postProcessPaymentRequest.Order.OrderShippingInclTax, 2)),
+                    quantity = 1 };
 
+                
+                string email = !string.IsNullOrWhiteSpace(postProcessPaymentRequest.Order.Customer.Email)? 
+                        postProcessPaymentRequest.Order.Customer.Email: 
+                        postProcessPaymentRequest.Order.BillingAddress.Email;
                 string name = AddressHelper.GetFullName(postProcessPaymentRequest.Order.BillingAddress);
-                string email = postProcessPaymentRequest.Order.Customer.Email;
                 string phone = AddressHelper.FormatarCelular(postProcessPaymentRequest.Order.BillingAddress.PhoneNumber);
 
                 string phoneNumber = AddressHelper.ObterNumeroTelefone(phone);
@@ -209,7 +221,14 @@ namespace Nop.Plugin.Payments.Iugu
                 }
 
 
-                var payer = new PayerModel() { CpfOrCnpj = cnpjcpf, Address = addressModel, Email = email, Name = name, Phone = phone, PhonePrefix = phonePrefix };
+                var payer = new PayerModel() {
+                    CpfOrCnpj = cnpjcpf,
+                    Address = addressModel,
+                    Email = email,
+                    Name = name,
+                    Phone = phone,
+                    PhonePrefix = phonePrefix };
+
                 var invoiceRequest = new InvoiceRequestMessage(email, invoiceDate, invoiceItems)
                 {
                     Payer = payer,
@@ -269,8 +288,5 @@ namespace Nop.Plugin.Payments.Iugu
             result.AddError("Void method not supported");
             return result;
         }
-
-
-
     }
 }
